@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✅ Ajoute ce bloc pour corriger le fond qui ne s'affiche pas */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
