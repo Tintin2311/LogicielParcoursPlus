@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient";
   
   <div style={{ textAlign: "center", marginTop: "80px" }}>
           <button
-            onClick={() => setPage("mesGroupes")}
+            onClick={() => setPage("MesGroupes")}
             style={{
               position: "absolute",
               top: 10,

@@ -20,7 +20,7 @@ import { supabase } from "./supabaseClient";
               cursor: "pointer",
             }}
           >
-            ⬅️ Retour
+            ⬅️ Retou
           </button>
 
           {parcoursActif ? (

@@ -1,0 +1,677 @@
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Shield, Heart, Sparkles, Mail, Lock, User, Phone, Calendar, MapPin, AlertTriangle, CheckCircle } from 'lucide-react';
+
+const PokemonDatingAuth = () => {
+  const [currentView, setCurrentView] = useState('landing'); // landing, login, signup
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [securityChecks, setSecurityChecks] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+
+  // États pour les formulaires
+  const [loginForm, setLoginForm] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [signupForm, setSignupForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    birthDate: '',
+    location: '',
+    termsAccepted: false,
+    privacyAccepted: false,
+    ageVerified: false
+  });
+
+  // Validation email
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Validation mot de passe
+  const validatePassword = (password) => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    setSecurityChecks(checks);
+    return Object.values(checks).every(check => check);
+  };
+
+  // Validation téléphone français
+  const validatePhone = (phone) => {
+    const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+    return phoneRegex.test(phone);
+  };
+
+  // Validation âge (18+)
+  const validateAge = (birthDate) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      return age - 1 >= 18;
+    }
+    return age >= 18;
+  };
+
+  // Gestion connexion
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    // Validation côté client
+    const newErrors = {};
+    if (!validateEmail(loginForm.email)) {
+      newErrors.email = 'Email invalide';
+    }
+    if (!loginForm.password) {
+      newErrors.password = 'Mot de passe requis';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Simulation d'appel API sécurisé
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // En production, utiliser HTTPS, JWT tokens sécurisés, rate limiting, etc.
+      console.log('Connexion sécurisée:', {
+        email: loginForm.email,
+        // Le mot de passe ne doit jamais être loggé
+        timestamp: new Date().toISOString(),
+        ip: 'obfuscated', // IP hashée pour la sécurité
+        userAgent: 'filtered' // User agent filtré
+      });
+      
+      alert('Connexion réussie !');
+    } catch (error) {
+      setErrors({ general: 'Erreur de connexion. Veuillez réessayer.' });
+    }
+    
+    setLoading(false);
+  };
+
+  // Gestion inscription
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    // Validation complète côté client
+    const newErrors = {};
+    
+    if (!validateEmail(signupForm.email)) {
+      newErrors.email = 'Email invalide';
+    }
+    if (!validatePassword(signupForm.password)) {
+      newErrors.password = 'Mot de passe ne respecte pas les critères de sécurité';
+    }
+    if (signupForm.password !== signupForm.confirmPassword) {
+      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    }
+    if (!signupForm.firstName.trim()) {
+      newErrors.firstName = 'Prénom requis';
+    }
+    if (!signupForm.lastName.trim()) {
+      newErrors.lastName = 'Nom requis';
+    }
+    if (!validatePhone(signupForm.phone)) {
+      newErrors.phone = 'Numéro de téléphone invalide';
+    }
+    if (!validateAge(signupForm.birthDate)) {
+      newErrors.birthDate = 'Vous devez avoir au moins 18 ans';
+    }
+    if (!signupForm.location.trim()) {
+      newErrors.location = 'Localisation requise';
+    }
+    if (!signupForm.termsAccepted) {
+      newErrors.terms = 'Vous devez accepter les conditions d\'utilisation';
+    }
+    if (!signupForm.privacyAccepted) {
+      newErrors.privacy = 'Vous devez accepter la politique de confidentialité';
+    }
+    if (!signupForm.ageVerified) {
+      newErrors.age = 'Vous devez certifier avoir au moins 18 ans';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Simulation d'appel API sécurisé avec toutes les mesures de sécurité
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // En production: hachage bcrypt, validation serveur, vérification email, etc.
+      console.log('Inscription sécurisée:', {
+        email: signupForm.email,
+        // Données sensibles jamais loggées en clair
+        hashedPassword: 'bcrypt_hash_here',
+        timestamp: new Date().toISOString(),
+        emailVerificationRequired: true,
+        phoneVerificationRequired: true,
+        gdprCompliant: true,
+        ageVerified: true
+      });
+      
+      alert('Inscription réussie ! Vérifiez votre email pour activer votre compte.');
+      setCurrentView('login');
+    } catch (error) {
+      setErrors({ general: 'Erreur lors de l\'inscription. Veuillez réessayer.' });
+    }
+    
+    setLoading(false);
+  };
+
+  // Page d'accueil principale
+  const LandingPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-400 rounded-full opacity-10 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-400 rounded-full opacity-10 animate-pulse delay-1000"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-blue-400 rounded-full opacity-5 animate-bounce"></div>
+      </div>
+      
+      <div className="relative z-10 text-center max-w-4xl mx-auto">
+        <div className="mb-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+          <div className="relative bg-white rounded-full p-6 inline-block">
+            <div className="flex items-center justify-center space-x-2">
+              <Heart className="w-12 h-12 text-pink-500 animate-pulse" />
+              <Sparkles className="w-8 h-8 text-yellow-500 animate-spin" />
+            </div>
+          </div>
+        </div>
+        
+        <h1 className="text-5xl md:text-7xl font-extrabold bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 bg-clip-text text-transparent mb-6 animate-pulse">
+          CardMatch
+        </h1>
+        
+        <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
+          Créez votre carte de profil unique et découvrez l'amour<br />
+          dans des paquets surprise quotidiens !
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <button 
+            onClick={() => setCurrentView('signup')}
+            className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-full hover:scale-105 transform transition-all duration-300 shadow-2xl hover:shadow-pink-500/25"
+          >
+            Créer un Compte
+          </button>
+          <button 
+            onClick={() => setCurrentView('login')}
+            className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300"
+          >
+            Se Connecter
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <Shield className="w-8 h-8 text-green-400 mx-auto mb-4" />
+            <h3 className="font-bold mb-2">100% Sécurisé</h3>
+            <p className="text-sm text-gray-300">Chiffrement end-to-end et protection des données</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <Sparkles className="w-8 h-8 text-yellow-400 mx-auto mb-4" />
+            <h3 className="font-bold mb-2">Découverte Unique</h3>
+            <p className="text-sm text-gray-300">Ouvrez vos paquets quotidiens de nouvelles rencontres</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <Heart className="w-8 h-8 text-red-400 mx-auto mb-4" />
+            <h3 className="font-bold mb-2">Profils Authentiques</h3>
+            <p className="text-sm text-gray-300">Vérification d'identité et modération active</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Page de connexion
+  const LoginPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+        <div className="text-center mb-8">
+          <Heart className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-gray-800">Connexion</h2>
+          <p className="text-gray-600 mt-2">Retrouvez vos cartes et vos matchs</p>
+        </div>
+
+        {errors.general && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            {errors.general}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                value={loginForm.email}
+                onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="votre@email.com"
+                required
+              />
+            </div>
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Votre mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-4 rounded-xl hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Connexion...' : 'Se Connecter'}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button 
+            onClick={() => setCurrentView('signup')}
+            className="text-pink-600 hover:text-pink-800 font-medium"
+          >
+            Pas encore de compte ? Inscrivez-vous
+          </button>
+        </div>
+
+        <button 
+          onClick={() => setCurrentView('landing')}
+          className="mt-4 w-full text-gray-600 hover:text-gray-800"
+        >
+          ← Retour à l'accueil
+        </button>
+      </div>
+    </div>
+  );
+
+  // Page d'inscription
+  const SignupPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Heart className="w-8 h-8 text-pink-500" />
+            <Sparkles className="w-6 h-6 text-yellow-500" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800">Créer un Compte</h2>
+          <p className="text-gray-600 mt-2">Rejoignez CardMatch et trouvez l'amour</p>
+        </div>
+
+        {errors.general && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            {errors.general}
+          </div>
+        )}
+
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={signupForm.firstName}
+                  onChange={(e) => setSignupForm({...signupForm, firstName: e.target.value})}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="Jean"
+                  required
+                />
+              </div>
+              {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={signupForm.lastName}
+                  onChange={(e) => setSignupForm({...signupForm, lastName: e.target.value})}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="Dupont"
+                  required
+                />
+              </div>
+              {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <input
+                type="email"
+                value={signupForm.email}
+                onChange={(e) => setSignupForm({...signupForm, email: e.target.value})}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="votre@email.com"
+                required
+              />
+            </div>
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <input
+                  type="tel"
+                  value={signupForm.phone}
+                  onChange={(e) => setSignupForm({...signupForm, phone: e.target.value})}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="06 12 34 56 78"
+                  required
+                />
+              </div>
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  value={signupForm.birthDate}
+                  onChange={(e) => setSignupForm({...signupForm, birthDate: e.target.value})}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.birthDate ? 'border-red-500' : 'border-gray-300'}`}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              {errors.birthDate && <p className="text-red-500 text-xs mt-1">{errors.birthDate}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={signupForm.location}
+                onChange={(e) => setSignupForm({...signupForm, location: e.target.value})}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Paris, France"
+                required
+              />
+            </div>
+            {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={signupForm.password}
+                onChange={(e) => {
+                  setSignupForm({...signupForm, password: e.target.value});
+                  validatePassword(e.target.value);
+                }}
+                className={`w-full pl-10 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Mot de passe sécurisé"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            
+            {/* Indicateurs de sécurité du mot de passe */}
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center text-xs">
+                <div className={`w-2 h-2 rounded-full mr-2 ${securityChecks.length ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={securityChecks.length ? 'text-green-600' : 'text-red-600'}>8 caractères minimum</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <div className={`w-2 h-2 rounded-full mr-2 ${securityChecks.uppercase ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={securityChecks.uppercase ? 'text-green-600' : 'text-red-600'}>Une majuscule</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <div className={`w-2 h-2 rounded-full mr-2 ${securityChecks.lowercase ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={securityChecks.lowercase ? 'text-green-600' : 'text-red-600'}>Une minuscule</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <div className={`w-2 h-2 rounded-full mr-2 ${securityChecks.number ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={securityChecks.number ? 'text-green-600' : 'text-red-600'}>Un chiffre</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <div className={`w-2 h-2 rounded-full mr-2 ${securityChecks.special ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={securityChecks.special ? 'text-green-600' : 'text-red-600'}>Un caractère spécial</span>
+              </div>
+            </div>
+            
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={signupForm.confirmPassword}
+                onChange={(e) => setSignupForm({...signupForm, confirmPassword: e.target.value})}
+                className={`w-full pl-10 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Confirmer le mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+          </div>
+
+          {/* Cases à cocher obligatoires */}
+          <div className="space-y-3 pt-4 border-t border-gray-200">
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={signupForm.termsAccepted}
+                onChange={(e) => setSignupForm({...signupForm, termsAccepted: e.target.checked})}
+                className="mt-1 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                required
+              />
+              <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
+                J'accepte les <span className="text-pink-600 hover:underline cursor-pointer">Conditions d'utilisation</span>
+              </label>
+            </div>
+            {errors.terms && <p className="text-red-500 text-xs">{errors.terms}</p>}
+
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="privacy"
+                checked={signupForm.privacyAccepted}
+                onChange={(e) => setSignupForm({...signupForm, privacyAccepted: e.target.checked})}
+                className="mt-1 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                required
+              />
+              <label htmlFor="privacy" className="ml-2 text-sm text-gray-700">
+                J'accepte la <span className="text-pink-600 hover:underline cursor-pointer">Politique de confidentialité</span>
+              </label>
+            </div>
+            {errors.privacy && <p className="text-red-500 text-xs">{errors.privacy}</p>}
+
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="age"
+                checked={signupForm.ageVerified}
+                onChange={(e) => setSignupForm({...signupForm, ageVerified: e.target.checked})}
+                className="mt-1 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                required
+              />
+              <label htmlFor="age" className="ml-2 text-sm text-gray-700 flex items-center">
+                <Shield className="w-4 h-4 mr-1 text-red-500" />
+                Je certifie avoir au moins 18 ans et être majeur(e) dans mon pays de résidence
+              </label>
+            </div>
+            {errors.age && <p className="text-red-500 text-xs">{errors.age}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 px-4 rounded-xl hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Création en cours...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Créer mon Compte
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button 
+            onClick={() => setCurrentView('login')}
+            className="text-pink-600 hover:text-pink-800 font-medium"
+          >
+            Déjà un compte ? Connectez-vous
+          </button>
+        </div>
+
+        <button 
+          onClick={() => setCurrentView('landing')}
+          className="mt-4 w-full text-gray-600 hover:text-gray-800"
+        >
+          ← Retour à l'accueil
+        </button>
+
+        {/* Informations de sécurité */}
+        <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center mb-2">
+            <Shield className="w-5 h-5 text-green-600 mr-2" />
+            <h4 className="font-semibold text-green-800">Sécurité et Confidentialité</h4>
+          </div>
+          <ul className="text-xs text-green-700 space-y-1">
+            <li>• Chiffrement AES-256 de toutes vos données</li>
+            <li>• Vérification d'identité par SMS et email</li>
+            <li>• Modération automatique et humaine des profils</li>
+            <li>• Signalement et blocage instantané</li>
+            <li>• Conformité RGPD et protection des données</li>
+            <li>• Authentification à deux facteurs disponible</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Rendu conditionnel basé sur la vue actuelle
+  const renderCurrentView = () => {
+    switch(currentView) {
+      case 'login':
+        return <LoginPage />;
+      case 'signup':
+        return <SignupPage />;
+      default:
+        return <LandingPage />;
+    }
+  };
+
+  return (
+    <div className="relative">
+      {/* Overlay de chargement global */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+            <p className="text-lg font-semibold text-gray-800">
+              {currentView === 'signup' ? 'Création de votre compte...' : 'Connexion en cours...'}
+            </p>
+            <p className="text-sm text-gray-600 mt-2">Vérification sécurisée</p>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications de sécurité (simulation) */}
+      <div className="fixed top-4 right-4 z-40 space-y-2">
+        {/* Ces notifications apparaîtraient en fonction des actions utilisateur */}
+      </div>
+
+      {renderCurrentView()}
+    </div>
+  );
+};
+
+export default PokemonDatingAuth;

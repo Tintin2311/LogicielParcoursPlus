@@ -1,0 +1,310 @@
+import React, { useState } from 'react';
+import { ArrowLeft, Trophy, Target, MapPin, Award, Star, TrendingUp, Compass, Medal, Zap } from 'lucide-react';
+
+const StatistiquesEleve = () => {
+  const [isLoaded, setIsLoaded] = useState(true);
+
+  // Données d'exemple pour la démonstration
+  const eleveConnecte = {
+    nom: "Alice Martin",
+    code: "ALI001"
+  };
+
+  const parcoursFiltres = [
+    { id: 1, nom: "Parcours Forêt des Chênes" },
+    { id: 2, nom: "Circuit du Lac Bleu" },
+    { id: 3, nom: "Randonnée des Crêtes" },
+    { id: 4, nom: "Parcours Urbain Centre-Ville" },
+    { id: 5, nom: "Trail des Vignobles" }
+  ];
+
+  const resultatsParParcours = [
+    { parcoursId: 1, points: 15, pointsPossibles: 20, essais: 2, termine: true },
+    { parcoursId: 2, points: 18, pointsPossibles: 20, essais: 1, termine: true },
+    { parcoursId: 3, points: 12, pointsPossibles: 20, essais: 3, termine: true },
+    { parcoursId: 4, points: 20, pointsPossibles: 20, essais: 1, termine: true },
+    { parcoursId: 5, points: 0, pointsPossibles: 20, essais: 0, termine: false }
+  ];
+
+  const totalPoints = resultatsParParcours.reduce((sum, r) => sum + r.points, 0);
+  const totalPointsPossibles = resultatsParParcours.reduce((sum, r) => sum + r.pointsPossibles, 0);
+  const pourcentageReussite = Math.round((totalPoints / totalPointsPossibles) * 100);
+  const parcoursTermines = resultatsParParcours.filter(r => r.termine).length;
+  const moyenneEssais = Math.round(
+    resultatsParParcours.filter(r => r.termine).reduce((sum, r) => sum + r.essais, 0) / parcoursTermines
+  );
+
+  const getPerformanceColor = (points: number, pointsPossibles: number) => {
+    const percentage = (points / pointsPossibles) * 100;
+    if (percentage >= 90) return "from-green-500 to-emerald-600";
+    if (percentage >= 75) return "from-blue-500 to-cyan-600";
+    if (percentage >= 60) return "from-yellow-500 to-orange-500";
+    return "from-red-500 to-pink-600";
+  };
+
+  const getPerformanceBadge = (points: number, pointsPossibles: number) => {
+    const percentage = (points / pointsPossibles) * 100;
+    if (percentage >= 90) return { text: "Excellent", icon: Trophy, color: "text-green-400" };
+    if (percentage >= 75) return { text: "Très Bien", icon: Medal, color: "text-blue-400" };
+    if (percentage >= 60) return { text: "Bien", icon: Star, color: "text-yellow-400" };
+    return { text: "À améliorer", icon: Target, color: "text-red-400" };
+  };
+
+  const badge = getPerformanceBadge(totalPoints, totalPointsPossibles);
+
+  // --- Bouton Retour corrigé ---
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Fallback si aucun historique (ex: ouverture directe via lien)
+      window.location.href = "/";
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full filter blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full filter blur-3xl animate-pulse" style={{ animationDelay: "2s" }}></div>
+        <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-emerald-500/20 rounded-full filter blur-3xl animate-pulse transform -translate-x-1/2 -translate-y-1/2" style={{ animationDelay: "4s" }}></div>
+      </div>
+
+      {/* Subtle Grid Pattern */}
+      <div className="absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+        backgroundSize: '50px 50px'
+      }}></div>
+
+      <div className={`relative z-10 container mx-auto px-6 py-8 transition-all duration-1000 ${
+        isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      }`}>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-12">
+          <button
+            onClick={handleBack}
+            className="group flex items-center px-6 py-3 bg-white/5 backdrop-blur-sm rounded-xl text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+            Retour
+          </button>
+
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-2xl mb-6 shadow-2xl">
+              <Compass className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 mb-3">
+              Mes Performances
+            </h1>
+            <p className="text-xl text-white/70 font-light">
+              Course d'Orientation - {eleveConnecte.nom}
+            </p>
+          </div>
+
+          <div className="flex items-center">
+            <badge.icon className={`w-8 h-8 ${badge.color} mr-2`} />
+            <div className="text-right">
+              <div className={`text-lg font-bold ${badge.color}`}>{badge.text}</div>
+              <div className="text-white/60 text-sm">{pourcentageReussite}% de réussite</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Score Principal */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-xl rounded-2xl p-8 border border-white/10 text-center relative overflow-hidden">
+            {/* Shine Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 animate-pulse"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-center mb-6">
+                <Trophy className="w-12 h-12 text-yellow-400 mr-4 animate-bounce" />
+                <div className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400">
+                  {totalPoints}
+                </div>
+                <div className="ml-4 text-left">
+                  <div className="text-white/60 text-sm">points sur</div>
+                  <div className="text-white/80 text-2xl font-bold">{totalPointsPossibles}</div>
+                </div>
+              </div>
+
+              {/* Barre de progression */}
+              <div className="w-full bg-gray-700/50 rounded-full h-4 mb-6 overflow-hidden">
+                <div 
+                  className={`h-full bg-gradient-to-r ${getPerformanceColor(totalPoints, totalPointsPossibles)} rounded-full transition-all duration-1000 ease-out relative`}
+                  style={{ width: `${pourcentageReussite}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Statistiques rapides */}
+                <div className="bg-gradient-to-br from-blue-500/10 to-cyan-600/10 backdrop-blur-sm rounded-xl p-4 border border-blue-400/20">
+                  <div className="flex items-center justify-center mb-2">
+                    <MapPin className="w-6 h-6 text-blue-400 mr-2" />
+                    <span className="text-blue-300 font-medium">Parcours</span>
+                  </div>
+                  <div className="text-2xl font-bold text-white text-center">
+                    {parcoursTermines}/{parcoursFiltres.length}
+                  </div>
+                  <div className="text-blue-300/70 text-sm text-center">terminés</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-500/10 to-emerald-600/10 backdrop-blur-sm rounded-xl p-4 border border-green-400/20">
+                  <div className="flex items-center justify-center mb-2">
+                    <TrendingUp className="w-6 h-6 text-green-400 mr-2" />
+                    <span className="text-green-300 font-medium">Réussite</span>
+                  </div>
+                  <div className="text-2xl font-bold text-white text-center">
+                    {pourcentageReussite}%
+                  </div>
+                  <div className="text-green-300/70 text-sm text-center">de réussite</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-500/10 to-violet-600/10 backdrop-blur-sm rounded-xl p-4 border border-purple-400/20">
+                  <div className="flex items-center justify-center mb-2">
+                    <Zap className="w-6 h-6 text-purple-400 mr-2" />
+                    <span className="text-purple-300 font-medium">Efficacité</span>
+                  </div>
+                  <div className="text-2xl font-bold text-white text-center">
+                    {moyenneEssais}
+                  </div>
+                  <div className="text-purple-300/70 text-sm text-center">essais moy.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Détail par Parcours */}
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-white mb-8 text-center">
+            📋 Détail par Parcours
+          </h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {parcoursFiltres.map((parcours, index) => {
+              const resultat = resultatsParParcours.find(r => r.parcoursId === parcours.id);
+              const percentage = resultat ? (resultat.points / resultat.pointsPossibles) * 100 : 0;
+              const gradientColor = getPerformanceColor(resultat?.points || 0, resultat?.pointsPossibles || 20);
+              
+              return (
+                <div
+                  key={parcours.id}
+                  className={`group bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl relative overflow-hidden ${
+                    isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                  }`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {/* Shine Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                  
+                  <div className="relative z-10">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
+                          {parcours.nom}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          {resultat?.termine ? (
+                            <div className="flex items-center px-3 py-1 bg-green-500/20 border border-green-400/40 text-green-300 rounded-full text-sm">
+                              <Award className="w-4 h-4 mr-1" />
+                              Terminé
+                            </div>
+                          ) : (
+                            <div className="flex items-center px-3 py-1 bg-gray-500/20 border border-gray-400/40 text-gray-400 rounded-full text-sm">
+                              <Target className="w-4 h-4 mr-1" />
+                              À faire
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Score */}
+                      <div className="text-right">
+                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                          {resultat?.points || 0}
+                        </div>
+                        <div className="text-white/60 text-sm">
+                          sur {resultat?.pointsPossibles || 20}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Barre de progression */}
+                    <div className="w-full bg-gray-700/50 rounded-full h-3 mb-4 overflow-hidden">
+                      <div 
+                        className={`h-full bg-gradient-to-r ${gradientColor} rounded-full transition-all duration-1000 ease-out relative`}
+                        style={{ width: `${percentage}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      </div>
+                    </div>
+
+                    {/* Détails */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-white/70">
+                        <Zap className="w-4 h-4 mr-1 text-purple-400" />
+                        {resultat?.essais || 0} essai{(resultat?.essais || 0) !== 1 ? 's' : ''}
+                      </div>
+                      <div className={`font-bold ${
+                        percentage >= 90 ? 'text-green-400' :
+                        percentage >= 75 ? 'text-blue-400' :
+                        percentage >= 60 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
+                        {Math.round(percentage)}%
+                      </div>
+                    </div>
+
+                    {/* Badge de performance */}
+                    {resultat?.termine && (
+                      <div className="mt-4 flex justify-center">
+                        {(() => {
+                          const parcoursBadge = getPerformanceBadge(resultat.points, resultat.pointsPossibles);
+                          return (
+                            <div className={`flex items-center px-3 py-1 rounded-full border transition-all duration-300 ${
+                              percentage >= 90 ? 'bg-green-500/20 border-green-400/40 text-green-300' :
+                              percentage >= 75 ? 'bg-blue-500/20 border-blue-400/40 text-blue-300' :
+                              percentage >= 60 ? 'bg-yellow-500/20 border-yellow-400/40 text-yellow-300' :
+                              'bg-red-500/20 border-red-400/40 text-red-300'
+                            }`}>
+                              <parcoursBadge.icon className="w-4 h-4 mr-1" />
+                              {parcoursBadge.text}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Message d'encouragement */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <div className="bg-gradient-to-r from-purple-500/10 to-pink-600/10 backdrop-blur-xl rounded-xl p-6 border border-purple-400/20 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <Star className="w-8 h-8 text-yellow-400 mr-2 animate-spin" style={{ animationDuration: '3s' }} />
+              <h3 className="text-2xl font-bold text-white">Continue comme ça !</h3>
+              <Star className="w-8 h-8 text-yellow-400 ml-2 animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }} />
+            </div>
+            <p className="text-white/80 text-lg">
+              {pourcentageReussite >= 90 ? "Excellent travail ! Tu maîtrises parfaitement la course d'orientation !" :
+               pourcentageReussite >= 75 ? "Très bonne performance ! Tu es sur la bonne voie !" :
+               pourcentageReussite >= 60 ? "Bon travail ! Continue à t'entraîner pour progresser !" :
+               "N'abandonne pas ! Chaque parcours est une opportunité d'apprendre et de progresser !"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StatistiquesEleve;
