@@ -1,0 +1,12 @@
+# Node / build
+node_modules
+dist
+.vercel
+.next
+
+# Env & secrets
+.env
+.env.*
+supabase.env
+supabase/.branches
+supabase/.temp

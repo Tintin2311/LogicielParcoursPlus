@@ -1,4 +1,4 @@
-// App.tsx
+// src/App.tsx
 import "./index.css";
 
 /* --- Pages / écrans --- */
@@ -23,6 +23,8 @@ import EcrireResultat from "./EcrireResultat";
 import StatistiquesEleve from "./StatistiquesEleve";
 import MotDePasseOublie from "./MotDePasseOublie";
 import PartageParcours from "./PartageParcours";
+import ObjectifsEleve from "./ObjectifsEleve";
+
 /* >>> NEW <<< */
 import ConfigurationPersonnalisee from "./ConfigurationPersonnalisee";
 
@@ -49,12 +51,13 @@ interface Partage {
 }
 
 interface Professeur {
-  id_uuid: string;
+  id_uuid?: string; // si présent dans ta table
   user_id: string;
   code: string;
-  nom?: string;
-  email?: string;
-  refuserPartage?: boolean;
+  nom?: string | null;
+  prenom?: string | null;
+  email?: string | null;
+  refuserPartage?: boolean | null;
   partagesRecus?: Partage[];
 }
 
@@ -99,6 +102,8 @@ type PageType =
   | "MotDePasseOublie"
   | "nouveauMotDePasse"
   | "AccueilEleve"
+  | "ObjectifsEleve"
+
   /* >>> NEW <<< */
   | "configurationPersonnalisee"
   | "gestionResultatsTentatives_parcours";
@@ -110,6 +115,60 @@ const LS_LAST_PAGE_PROF = "dernierePage";
 const LS_LAST_PAGE_ELEVE = "dernierePageEleve";
 const LS_ELEVE_CACHE = "eleveCache";
 const LS_LAST_MODE = "derniereConnexionMode";
+const LS_PENDING_PROF = "pending_prof_profile";
+
+/* =========================
+  HELPERS DB (profil prof)
+========================= */
+/** Crée la ligne professeurs si elle n'existe pas encore */
+async function ensureProfesseurRow(
+  userId: string,
+  emailFromSession?: string | null
+) {
+  // 1) existe déjà ?
+  const { data: existing, error: selErr } = await supabase
+    .from("professeurs")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (selErr) {
+    console.warn("select professeurs failed:", selErr);
+    return;
+  }
+  if (existing) return; // rien à faire
+
+  // 2) récup profil en attente (stocké au signUp)
+  let pending: any = null;
+  try {
+    pending = JSON.parse(localStorage.getItem(LS_PENDING_PROF) || "null");
+  } catch {}
+
+  // 3) générer code si absent
+  const makeCode = () => {
+    const lettres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const len = Math.floor(Math.random() * 3) + 8; // 8..10
+    return Array.from({ length: len }, () => lettres[Math.floor(Math.random() * lettres.length)]).join("");
+  };
+
+  const row = {
+    user_id: userId,
+    prenom: pending?.prenom || null,
+    nom: pending?.nom || null,
+    email: (pending?.email || emailFromSession || "").toLowerCase() || null,
+    code: pending?.code || makeCode(),
+    refuserPartage: false,
+  };
+
+  const { error: insErr } = await supabase.from("professeurs").insert([row]);
+  if (insErr) {
+    console.error("insert professeurs failed:", insErr);
+    return;
+  }
+  try {
+    localStorage.removeItem(LS_PENDING_PROF);
+  } catch {}
+}
 
 /* =========================
           APP
@@ -242,6 +301,9 @@ export default function App() {
         const userId = session?.user?.id ?? null;
 
         if (userId) {
+          // ⬅️ NOUVEAU : garantit la présence de la ligne prof
+          await ensureProfesseurRow(userId, session?.user?.email || null);
+
           const { data: prof } = await supabase
             .from("professeurs")
             .select("*")
@@ -314,6 +376,7 @@ export default function App() {
     restore();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, _sess) => {
+      // lors d'un sign-in après validation email, on rejoue restore()
       restore();
     });
 
@@ -330,7 +393,9 @@ export default function App() {
     const hash = window.location.hash || "";
     const search = window.location.search || "";
 
-    const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+    const hashParams = new URLSearchParams(
+      hash.startsWith("#") ? hash.slice(1) : hash
+    );
     const queryParams = new URLSearchParams(search);
 
     const isRecovery =
@@ -536,44 +601,57 @@ export default function App() {
           {/* =====================
                Espace ÉLÈVE
           ===================== */}
-          {eleve && modeConnexion === "eleve" && (
-            <>
-              {page === "AccueilEleve" && (
-                <AccueilEleve setPage={setPage} eleveConnecte={eleve} handleDeconnexion={handleDeconnexion} />
-              )}
+        {eleve && modeConnexion === "eleve" && (
+  <>
+    {page === "AccueilEleve" && (
+      <AccueilEleve
+        setPage={setPage}
+        eleveConnecte={eleve}
+        handleDeconnexion={handleDeconnexion}
+      />
+    )}
 
-              {page === "EcrireResultat" && (
-                <EcrireResultat
-                  setPage={setPage}
-                  eleveConnecte={eleve}
-                  parcoursGlobaux={parcoursGlobaux}
-                  groupes={groupes}
-                  dossiersParcours={dossiersParcours}
-                  parcoursTerminesEleves={parcoursTerminesEleves}
-                  setParcoursActif={setParcoursActif}
-                  setAffichageResultat={setAffichageResultat}
-                />
-              )}
+    {page === "EcrireResultat" && (
+      <EcrireResultat
+        setPage={setPage}
+        eleveConnecte={eleve}
+        parcoursGlobaux={parcoursGlobaux}
+        groupes={groupes}
+        dossiersParcours={dossiersParcours}
+        parcoursTerminesEleves={parcoursTerminesEleves}
+        setParcoursActif={setParcoursActif}
+        setAffichageResultat={setAffichageResultat}
+      />
+    )}
 
-              {page === "StatistiquesEleve" && (
-                <StatistiquesEleve
-                  setPage={setPage}
-                  eleveConnecte={eleve}
-                  parcoursGlobaux={parcoursGlobaux}
-                  groupes={groupes}
-                  dossiersParcours={dossiersParcours}
-                  parcoursTerminesEleves={parcoursTerminesEleves}
-                  setParcoursActif={setParcoursActif}
-                  setAffichageResultat={setAffichageResultat}
-                  resultatsEleves={resultatsEleves}
-                  modePoints={modePoints}
-                  baremePointsGlobal={baremePointsGlobal}
-                  baremeEvaluation={baremeEvaluation}
-                  baremePointsParcours={baremePointsParcours}
-                />
-              )}
-            </>
-          )}
+    {page === "StatistiquesEleve" && (
+      <StatistiquesEleve
+        setPage={setPage}
+        eleveConnecte={eleve}
+        parcoursGlobaux={parcoursGlobaux}
+        groupes={groupes}
+        dossiersParcours={dossiersParcours}
+        parcoursTerminesEleves={parcoursTerminesEleves}
+        setParcoursActif={setParcoursActif}
+        setAffichageResultat={setAffichageResultat}
+        resultatsEleves={resultatsEleves}
+        modePoints={modePoints}
+        baremePointsGlobal={baremePointsGlobal}
+        baremeEvaluation={baremeEvaluation}
+        baremePointsParcours={baremePointsParcours}
+      />
+    )}
+
+    {/* 👉 NOUVELLE PAGE */}
+    {page === "ObjectifsEleve" && (
+      <ObjectifsEleve
+        setPage={setPage}
+        eleveNom={eleve.display_name || eleve.name || eleve.nom || "Élève"}
+      />
+    )}
+  </>
+)}
+
 
           {/* --- Création de compte (publique) --- */}
           {page === "CreationCompteProf" && modeConnexion === "accueil" && (
